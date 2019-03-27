@@ -3922,7 +3922,12 @@ msgid "Fully charged"
 msgstr "Polna napolnjenost"
 
 #. TRANSLATORS: primary battery
-#: panels/power/cc-power-panel.c:321 panels/power/cc-power-panel.c:349
+#: panels/power/cc-power-panel.c:327 panels/power/cc-power-panel.c:357
+msgid "Not charging"
+msgstr "Naprava se ne polni"
+
+#. TRANSLATORS: primary battery
+#: panels/power/cc-power-panel.c:331 panels/power/cc-power-panel.c:361
 msgid "Empty"
 msgstr "Prazno"
 

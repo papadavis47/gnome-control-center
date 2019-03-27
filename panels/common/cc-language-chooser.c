@@ -42,7 +42,6 @@ typedef struct {
         GtkListBoxRow *more_item;
         GtkWidget *filter_entry;
         GtkWidget *language_list;
-        GtkWidget *scrolledwindow;
         gboolean showing_extra;
         gchar *language;
         gchar **filter_words;
@@ -121,7 +120,7 @@ more_widget_new (void)
         row = gtk_list_box_row_new ();
         box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 10);
         gtk_container_add (GTK_CONTAINER (row), box);
-        gtk_widget_set_tooltip_text (box, _("More…"));
+        gtk_widget_set_tooltip_text (box, _("Install More…"));
 
         arrow = gtk_image_new_from_icon_name ("view-more-symbolic", GTK_ICON_SIZE_MENU);
         gtk_style_context_add_class (gtk_widget_get_style_context (arrow), "dim-label");
@@ -165,7 +164,7 @@ add_languages (GtkDialog   *chooser,
                 gtk_container_add (GTK_CONTAINER (priv->language_list), widget);
         }
 
-        gtk_container_add (GTK_CONTAINER (priv->language_list), GTK_WIDGET (priv->more_item));
+        /*gtk_container_add (GTK_CONTAINER (priv->language_list), GTK_WIDGET (priv->more_item));*/
 
         gtk_widget_show_all (priv->language_list);
 }
@@ -176,7 +175,7 @@ add_all_languages (GtkDialog *chooser)
         gchar **locale_ids;
         GHashTable *initial;
 
-        locale_ids = gnome_get_all_locales ();
+        locale_ids = gnome_get_all_languages ();
         initial = cc_common_language_get_initial_languages ();
         add_languages (chooser, locale_ids, initial);
         g_hash_table_destroy (initial);
@@ -288,17 +287,11 @@ static void
 show_more (GtkDialog *chooser, gboolean visible)
 {
         CcLanguageChooserPrivate *priv = GET_PRIVATE (chooser);
-        GtkWidget *widget;
         gint width, height;
 
         gtk_window_get_size (GTK_WINDOW (chooser), &width, &height);
         gtk_widget_set_size_request (GTK_WIDGET (chooser), width, height);
         gtk_window_set_resizable (GTK_WINDOW (chooser), TRUE);
-
-        widget = priv->scrolledwindow;
-        gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (widget),
-                                        GTK_POLICY_NEVER,
-                                        visible ? GTK_POLICY_AUTOMATIC : GTK_POLICY_NEVER);
 
         gtk_widget_set_visible (priv->filter_entry, visible);
         gtk_widget_grab_focus (visible ? priv->filter_entry : priv->language_list);
@@ -306,6 +299,8 @@ show_more (GtkDialog *chooser, gboolean visible)
         priv->showing_extra = visible;
 
         gtk_list_box_invalidate_filter (GTK_LIST_BOX (priv->language_list));
+
+        gtk_window_set_title (GTK_WINDOW(chooser), _("Install Language"));
 }
 static void
 set_locale_id (GtkDialog *chooser,
@@ -427,8 +422,7 @@ cc_language_chooser_new (GtkWidget *parent)
         priv->done_button = WID ("ok-button");
         priv->filter_entry = WID ("language-filter-entry");
         priv->language_list = WID ("language-list");
-        priv->scrolledwindow = WID ("language-scrolledwindow");
-        priv->more_item = more_widget_new ();
+        /* priv->more_item = more_widget_new (); */
         /* We ref-sink here so we can reuse this widget multiple times */
         priv->no_results = g_object_ref_sink (no_results_widget_new ());
         gtk_widget_show_all (priv->no_results);

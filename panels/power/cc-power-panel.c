@@ -295,7 +295,6 @@ get_details_string (gdouble percentage, UpDeviceState state, guint64 time)
       switch (state)
         {
           case UP_DEVICE_STATE_CHARGING:
-          case UP_DEVICE_STATE_PENDING_CHARGE:
             /* TRANSLATORS: %1 is a time string, e.g. "1 hour 5 minutes" */
             details = g_strdup_printf (_("%s until fully charged"), time_string);
             break;
@@ -316,6 +315,10 @@ get_details_string (gdouble percentage, UpDeviceState state, guint64 time)
             /* TRANSLATORS: primary battery */
             details = g_strdup (_("Fully charged"));
             break;
+          case UP_DEVICE_STATE_PENDING_CHARGE:
+            /* TRANSLATORS: primary battery */
+            details = g_strdup (_("Not charging"));
+            break;
           case UP_DEVICE_STATE_EMPTY:
             /* TRANSLATORS: primary battery */
             details = g_strdup (_("Empty"));
@@ -331,7 +334,6 @@ get_details_string (gdouble percentage, UpDeviceState state, guint64 time)
       switch (state)
         {
           case UP_DEVICE_STATE_CHARGING:
-          case UP_DEVICE_STATE_PENDING_CHARGE:
             /* TRANSLATORS: primary battery */
             details = g_strdup (_("Charging"));
             break;
@@ -343,6 +345,10 @@ get_details_string (gdouble percentage, UpDeviceState state, guint64 time)
           case UP_DEVICE_STATE_FULLY_CHARGED:
             /* TRANSLATORS: primary battery */
             details = g_strdup (_("Fully charged"));
+            break;
+          case UP_DEVICE_STATE_PENDING_CHARGE:
+            /* TRANSLATORS: primary battery */
+            details = g_strdup (_("Not charging"));
             break;
           case UP_DEVICE_STATE_EMPTY:
             /* TRANSLATORS: primary battery */

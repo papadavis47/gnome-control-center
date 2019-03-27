@@ -17,6 +17,7 @@ panels = [
   'search',
   'sharing',
   'sound',
+  'ubuntu',
   'universal-access',
   'user-accounts'
 ]
@@ -28,6 +29,7 @@ endif
 if host_is_linux_not_s390
   panels += [
     'bluetooth',
+    'thunderbolt',
     'wacom'
   ]
 endif

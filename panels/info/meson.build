@@ -6,6 +6,17 @@ panel_names = [
 
 panels_list += panel_names
 
+polkit = 'org.gnome.controlcenter.info-overview.policy'
+
+i18n.merge_file(
+  polkit,
+  input: polkit + '.in',
+  output: polkit,
+  po_dir: po_dir,
+  install: true,
+  install_dir: join_paths(control_center_datadir, 'polkit-1', 'actions')
+)
+
 foreach name: panel_names
   desktop = 'gnome-' + name + '-panel.desktop'
 
@@ -41,7 +52,11 @@ sources = files(gsd_sources) + files(
   'cc-info-default-apps-panel.c',
   'cc-info-overview-panel.c',
   'cc-info-removable-media-panel.c',
-  'info-cleanup.c'
+  'dmi-info.c',
+  'info-cleanup.c',
+  's76-firmware.c',
+  's76-firmware-daemon.c',
+  's76-firmware-dialog.c',
 )
 
 resource_data = files(

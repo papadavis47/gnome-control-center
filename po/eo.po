@@ -4052,7 +4052,12 @@ msgstr "%s restanta"
 #. TRANSLATORS: primary battery
 #: ../panels/power/cc-power-panel.c:317 ../panels/power/cc-power-panel.c:345
 msgid "Fully charged"
-msgstr "Plene ŝargita"
+msgstr "Tute ŝargita"
+
+#. TRANSLATORS: primary battery
+#: panels/power/cc-power-panel.c:327 panels/power/cc-power-panel.c:357
+msgid "Not charging"
+msgstr "Ne ŝargante"
 
 #. TRANSLATORS: primary battery
 #: ../panels/power/cc-power-panel.c:321 ../panels/power/cc-power-panel.c:349

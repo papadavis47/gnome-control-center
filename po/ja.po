@@ -3904,7 +3904,12 @@ msgid "Fully charged"
 msgstr "フル充電"
 
 #. TRANSLATORS: primary battery
-#: ../panels/power/cc-power-panel.c:321 ../panels/power/cc-power-panel.c:349
+#: panels/power/cc-power-panel.c:327 panels/power/cc-power-panel.c:357
+msgid "Not charging"
+msgstr "放電中"
+
+#. TRANSLATORS: primary battery
+#: panels/power/cc-power-panel.c:331 panels/power/cc-power-panel.c:361
 msgid "Empty"
 msgstr "空"
 

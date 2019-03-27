@@ -3902,7 +3902,12 @@ msgid "Fully charged"
 msgstr "Cargada completamente"
 
 #. TRANSLATORS: primary battery
-#: panels/power/cc-power-panel.c:321 panels/power/cc-power-panel.c:349
+#: panels/power/cc-power-panel.c:327 panels/power/cc-power-panel.c:357
+msgid "Not charging"
+msgstr "No está cargando"
+
+#. TRANSLATORS: primary battery
+#: panels/power/cc-power-panel.c:331 panels/power/cc-power-panel.c:361
 msgid "Empty"
 msgstr "Vacía"
 

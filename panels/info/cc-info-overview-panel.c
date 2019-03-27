@@ -46,10 +46,13 @@
 #include <gdk/gdkx.h>
 #endif
 
-#include "gsd-disk-space-helper.h"
-
 #include "cc-info-overview-panel.h"
+#include "dmi-info.h"
+#include "gsd-disk-space-helper.h"
+#include "s76-firmware.h"
+#include <polkit/polkit.h>
 
+#define INFO_PERMISSION "org.gnome.controlcenter.info-overview.administration"
 
 typedef struct {
   /* Will be one or 2 GPU name strings, or "Unknown" */
@@ -69,6 +72,20 @@ typedef struct
   GtkWidget      *graphics_label;
   GtkWidget      *virt_type_label;
   GtkWidget      *updates_button;
+
+  /* Pop fields */
+  GtkWidget      *computer_label;
+  GtkWidget      *model_label;
+  GtkWidget      *firmware_upgrade_label;
+  GtkWidget      *firmware_button;
+  GtkWidget      *lock_button;
+  GtkWidget      *lock_header;
+  GPermission    *permission;
+
+  S76FirmwareDaemon  *firmware_daemon;
+  S76FirmwareVersion *firmware_version;
+  gchar              *firmware_digest;
+  gchar              *firmware_changelog;
 
   /* Virtualisation labels */
   GtkWidget      *label8;
@@ -772,7 +789,7 @@ info_overview_panel_setup_overview (CcInfoOverviewPanel *self)
   if (res)
     {
       g_autofree gchar *text = NULL;
-      text = g_strdup_printf (_("Version %s"), priv->gnome_version);
+      text = g_strdup_printf ("%s", priv->gnome_version);
       gtk_label_set_text (GTK_LABEL (priv->version_label), text);
     }
 
@@ -832,11 +849,27 @@ on_updates_button_clicked (GtkWidget           *widget,
 }
 
 static void
+cc_info_overview_panel_constructed (GObject *object)
+{
+	 CcInfoOverviewPanel *self = CC_INFO_OVERVIEW_PANEL (object);
+  CcInfoOverviewPanelPrivate *priv = cc_info_overview_panel_get_instance_private (self);
+
+	 G_OBJECT_CLASS (cc_info_overview_panel_parent_class)->constructed (object);
+
+  CcShell *shell = cc_panel_get_shell (CC_PANEL (self));
+  cc_shell_embed_widget_in_header (shell, priv->lock_header);
+  gtk_widget_show_all (priv->lock_header);
+}
+
+static void
 cc_info_overview_panel_dispose (GObject *object)
 {
   CcInfoOverviewPanelPrivate *priv = cc_info_overview_panel_get_instance_private (CC_INFO_OVERVIEW_PANEL (object));
 
   g_clear_pointer (&priv->graphics_data, graphics_data_free);
+  g_clear_pointer (&priv->firmware_version, s76_firmware_version_free);
+  g_slice_free (S76FirmwareDaemon, priv->firmware_daemon);
+  g_clear_object (&priv->permission);
 
   G_OBJECT_CLASS (cc_info_overview_panel_parent_class)->dispose (object);
 }
@@ -863,11 +896,76 @@ cc_info_overview_panel_finalize (GObject *object)
 }
 
 static void
+set_computer_label (GtkLabel *label)
+{
+  g_autofree char *product_name = get_product_name ();
+  g_autofree char *sys_vendor = get_sys_vendor ();
+  g_autofree char *computer_text = g_strconcat (sys_vendor, " ", product_name, NULL);
+
+  gtk_label_set_text (label, computer_text ? computer_text : "");
+}
+
+static void
+set_model_label (GtkLabel *label)
+{
+  g_autofree char *model_text = get_product_version ();
+  gtk_label_set_text (label, model_text ? model_text : "");
+}
+
+static void s76_firmware_connect_schedule (GtkButton *button, FirmwareScheduleData *data)
+{
+  CcInfoOverviewPanelPrivate *priv = (CcInfoOverviewPanelPrivate*) data->data;
+  g_info ("scheduling upgrade of firmware to %s", priv->firmware_version->bios);
+
+  const gchar *scheduled_label = _("Firmware Upgrade Scheduled");
+
+#ifdef TEST_MODE
+  g_info ("faking firmware scheduling");
+  gtk_widget_hide (priv->firmware_button);
+  gtk_widget_set_halign (GTK_WIDGET (priv->firmware_upgrade_label), GTK_ALIGN_CENTER);
+  gtk_label_set_label (GTK_LABEL (priv->firmware_upgrade_label), scheduled_label);
+#else
+  if (!s76_firmware_daemon_schedule (priv->firmware_daemon, priv->firmware_digest)) {
+    gtk_widget_hide (priv->firmware_button);
+    gtk_widget_set_halign (GTK_WIDGET (priv->firmware_upgrade_label), GTK_ALIGN_CENTER);
+    gtk_label_set_label (GTK_LABEL (priv->firmware_upgrade_label), scheduled_label);
+
+    g_info ("rebooting to install firmware upgrade");
+    char *argv[1];
+    argv[0] = "reboot";
+    g_spawn_sync (NULL, argv, NULL, G_SPAWN_DEFAULT, NULL, NULL, NULL, NULL, NULL, NULL);
+  } else {
+    g_warning ("failed to schedule firmware upgrade");
+  }
+#endif
+
+  gtk_dialog_response(data->dialog, GTK_RESPONSE_CLOSE);
+  g_slice_free (FirmwareScheduleData, data);
+}
+
+static void
+s76_firmware_dialog (GtkButton *button,
+                     CcInfoOverviewPanel *self)
+{
+  CcInfoOverviewPanelPrivate *priv = cc_info_overview_panel_get_instance_private (self);
+
+  g_info ("opening firmware dialog for bios %s", priv->firmware_version->bios);
+  FirmwareUpdateDialog dialog = firmware_dialog_new (
+    priv->firmware_version->bios,
+    priv->firmware_version->changes
+  );
+
+  firmware_dialog_connect_reboot (&dialog, G_CALLBACK (s76_firmware_connect_schedule), priv);
+  firmware_dialog_run (&dialog);
+}
+
+static void
 cc_info_overview_panel_class_init (CcInfoOverviewPanelClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
+  object_class->constructed = cc_info_overview_panel_constructed;
   object_class->finalize = cc_info_overview_panel_finalize;
   object_class->dispose = cc_info_overview_panel_dispose;
 
@@ -888,7 +986,45 @@ cc_info_overview_panel_class_init (CcInfoOverviewPanelClass *klass)
   gtk_widget_class_bind_template_child_private (widget_class, CcInfoOverviewPanel, grid1);
   gtk_widget_class_bind_template_child_private (widget_class, CcInfoOverviewPanel, label18);
 
+  // Pop!_OS extra details
+  gtk_widget_class_bind_template_child_private (widget_class, CcInfoOverviewPanel, computer_label);
+  gtk_widget_class_bind_template_child_private (widget_class, CcInfoOverviewPanel, model_label);
+
+  // Pop!_OS firmware listbox
+  gtk_widget_class_bind_template_child_private (widget_class, CcInfoOverviewPanel, firmware_upgrade_label);
+  gtk_widget_class_bind_template_child_private (widget_class, CcInfoOverviewPanel, firmware_button);
+
   g_type_ensure (CC_TYPE_HOSTNAME_ENTRY);
+}
+
+static void
+on_permission_changed (GPermission *permission, GParamSpec *pspec, gpointer data) {
+  CcInfoOverviewPanelPrivate *self = data;
+  gboolean is_allowed = g_permission_get_allowed (G_PERMISSION (self->permission));
+  gtk_widget_set_sensitive (GTK_WIDGET (self->firmware_button), is_allowed);
+}
+
+static void
+set_permissions (CcInfoOverviewPanelPrivate *self) {
+  GError *error = NULL;
+  self->permission = (GPermission *) polkit_permission_new_sync (INFO_PERMISSION, NULL, NULL, &error);
+  gtk_widget_set_sensitive (self->firmware_button, FALSE);
+
+  if (self->permission != NULL) {
+          g_signal_connect (self->permission, "notify",
+                            G_CALLBACK (on_permission_changed), self);
+          on_permission_changed (self->permission, NULL, self);
+  } else {
+          g_warning ("Cannot create '%s' permission: %s", INFO_PERMISSION, error->message);
+          g_error_free (error);
+  }
+
+  self->lock_button = gtk_lock_button_new (self->permission);
+  gtk_widget_set_name (self->lock_button, "info-lock");
+
+  self->lock_header = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 6);
+  gtk_container_add (self->lock_header, self->lock_button);
+  gtk_widget_show_all (self->lock_header);
 }
 
 static void
@@ -909,6 +1045,26 @@ cc_info_overview_panel_init (CcInfoOverviewPanel *self)
 
   info_overview_panel_setup_overview (self);
   info_overview_panel_setup_virt (self);
+
+  // Pop-specific details
+  GtkSizeGroup *button_group = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+  gtk_size_group_add_widget (button_group, priv->firmware_button);
+
+  set_computer_label (GTK_LABEL (priv->computer_label));
+  set_model_label (GTK_LABEL (priv->model_label));
+
+  s76_firmware_check (
+    &priv->firmware_daemon,
+    &priv->firmware_version,
+    GTK_BUTTON (priv->firmware_button),
+    GTK_LABEL (priv->firmware_upgrade_label),
+    &priv->firmware_digest,
+    &priv->firmware_changelog
+  );
+
+  set_permissions (priv);
+
+  g_signal_connect (priv->firmware_button, "clicked", G_CALLBACK (s76_firmware_dialog), self);
 }
 
 GtkWidget *

@@ -840,8 +840,9 @@ show_user (ActUser *user, CcUserPanelPrivate *d)
 
         name = NULL;
         lang = g_strdup (act_user_get_language (user));
+        cc_common_language_get_locale (lang, &lang);
         if ((!lang || *lang == '\0') && act_user_get_uid (user) == getuid ()) {
-                lang = cc_common_language_get_current_language ();
+                lang = cc_common_language_get_property ("Language");
                 act_user_set_language (user, lang);
         }
 
@@ -999,6 +1000,7 @@ language_response (GtkDialog         *dialog,
         GtkWidget *button;
         ActUser *user;
         const gchar *lang, *account_language;
+        gchar *locale;
         gchar *name = NULL;
 
         if (response_id != GTK_RESPONSE_OK) {
@@ -1010,8 +1012,9 @@ language_response (GtkDialog         *dialog,
         account_language = act_user_get_language (user);
 
         lang = cc_language_chooser_get_language (GTK_WIDGET (dialog));
+        cc_common_language_get_locale(act_user_get_language (user),&locale);
         if (lang) {
-                if (g_strcmp0 (lang, account_language) != 0) {
+                if (g_strcmp0 (lang, locale) != 0) {
                         act_user_set_language (user, lang);
                 }
 
@@ -1033,6 +1036,7 @@ change_language (GtkButton *button,
 
         user = get_selected_user (d);
         current_language = act_user_get_language (user);
+        cc_common_language_get_locale (current_language, &current_language);
 
         if (d->language_chooser) {
 		cc_language_chooser_clear_filter (d->language_chooser);

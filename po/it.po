@@ -3936,7 +3936,12 @@ msgstr "In carica"
 msgid "Discharging"
 msgstr "In scarica"
 
-#: panels/power/cc-power-panel.c:464
+#. TRANSLATORS: primary battery
+#: panels/power/cc-power-panel.c:327 panels/power/cc-power-panel.c:357
+msgid "Not charging"
+msgstr "Non in carica"
+
+#: panels/power/cc-power-panel.c:465
 msgctxt "Battery name"
 msgid "Main"
 msgstr "Principale"

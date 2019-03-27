@@ -113,6 +113,7 @@ struct _CcRegionPanelPrivate {
         GtkWidget *move_down_input;
         GtkWidget *show_config;
         GtkWidget *show_layout;
+        GtkWidget *language_support_button;
 
         GSettings *input_settings;
         GnomeXkbInfo *xkb_info;
@@ -360,6 +361,9 @@ update_language (CcRegionPanel *self,
 {
 	CcRegionPanelPrivate *priv = self->priv;
 
+        if (!cc_common_language_maybe_install (0, language, FALSE))
+            return;
+
         if (priv->login) {
                 set_system_language (self, language);
         } else {
@@ -377,11 +381,15 @@ language_response (GtkDialog     *chooser,
                    gint           response_id,
                    CcRegionPanel *self)
 {
-        const gchar *language;
+        const gchar *locale, *language, *country;
+        gchar *name = NULL;
 
         if (response_id == GTK_RESPONSE_OK) {
-                language = cc_language_chooser_get_language (GTK_WIDGET (chooser));
-                update_language (self, language);
+                locale = cc_language_chooser_get_language (GTK_WIDGET (chooser));
+                gnome_parse_locale (locale, &language, &country, NULL, NULL);
+                name = g_strdup_printf ("%s_%s", language, country);
+                update_language (self, name);
+                g_free (name);
         }
 
         gtk_widget_destroy (GTK_WIDGET (chooser));
@@ -403,6 +411,47 @@ set_system_region (CcRegionPanel *self,
 }
 
 static void
+set_formats_locale (const gchar *formats_locale)
+{
+        GDBusProxy  *proxy;
+        GError      *error = NULL;
+        gchar       *user_path;
+        GVariant    *ret;
+
+        user_path = g_strdup_printf ("/org/freedesktop/Accounts/User%i", getuid ());
+        proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                               G_DBUS_PROXY_FLAGS_NONE,
+                                               NULL,
+                                               "org.freedesktop.Accounts",
+                                               user_path,
+                                               "org.freedesktop.Accounts.User",
+                                               NULL,
+                                               &error);
+        if (!proxy) {
+                g_warning ("Couldn't get accountsservice proxy for %s: %s", user_path, error->message);
+                g_error_free (error);
+                g_free (user_path);
+                return;
+        }
+
+        ret = g_dbus_proxy_call_sync (proxy,
+                                      "SetFormatsLocale",
+                                      g_variant_new ("(s)", formats_locale),
+                                      G_DBUS_CALL_FLAGS_NONE,
+                                      -1,
+                                      NULL,
+                                      &error);
+        if (!ret) {
+                g_warning ("Couldn't set FormatsLocale: %s", error->message);
+                g_error_free (error);
+        } else
+                g_variant_unref (ret);
+
+        g_object_unref (proxy);
+        g_free (user_path);
+}
+
+static void
 update_region (CcRegionPanel *self,
                const gchar   *region)
 {
@@ -413,6 +462,7 @@ update_region (CcRegionPanel *self,
         } else {
                 if (g_strcmp0 (region, priv->region) == 0)
                         return;
+                set_formats_locale(region);
                 g_settings_set_string (priv->locale_settings, KEY_REGION, region);
                 if (priv->login_auto_apply)
                         set_system_region (self, region);
@@ -593,7 +643,7 @@ update_region_from_setting (CcRegionPanel *self)
         CcRegionPanelPrivate *priv = self->priv;
 
         g_free (priv->region);
-        priv->region = g_settings_get_string (priv->locale_settings, KEY_REGION);
+        priv->region = cc_common_language_get_property ("FormatsLocale");
         update_region_label (self);
 }
 
@@ -622,15 +672,19 @@ update_language_from_user (CcRegionPanel *self)
 {
 	CcRegionPanelPrivate *priv = self->priv;
         const gchar *language = NULL;
+        const gchar *locale;
 
-        if (act_user_is_loaded (priv->user))
+        if (act_user_is_loaded (priv->user)) {
                 language = act_user_get_language (priv->user);
+                cc_common_language_get_locale (language, &locale);
+        }
 
-        if (language == NULL || *language == '\0')
-                language = setlocale (LC_MESSAGES, NULL);
+        if (language == NULL || *language == '\0') {
+                locale = setlocale (LC_MESSAGES, NULL);
+        }
 
         g_free (priv->language);
-        priv->language = g_strdup (language);
+        priv->language = g_strdup (locale);
         update_language_label (self);
 }
 
@@ -671,6 +725,11 @@ setup_language_section (CcRegionPanel *self)
 
         update_language_from_user (self);
         update_region_from_setting (self);
+
+        /* check if there are missing lang packs */
+        cc_common_language_maybe_install (0, priv->language, TRUE);
+
+
 }
 
 #ifdef HAVE_IBUS
@@ -1340,6 +1399,33 @@ show_selected_settings (CcRegionPanel *self)
         g_object_unref (ctx);
 }
 
+
+static void
+show_language_support (CcRegionPanel *self)
+{
+        GAppInfo *app_info;
+        GdkAppLaunchContext *ctx;
+        GError *error = NULL;
+
+        app_info = G_APP_INFO (g_desktop_app_info_new ("gnome-language-selector.desktop"));
+
+        if (app_info) {
+                ctx = gdk_display_get_app_launch_context (gdk_display_get_default ());
+                g_app_info_launch (app_info, NULL, G_APP_LAUNCH_CONTEXT (ctx), &error);
+        } else {
+                g_warning ("Failed to launch language-selector: couldn't create GDesktopAppInfo");
+                return;
+        }
+
+        if (error) {
+                g_warning ("Failed to launch language-selector: %s", error->message);
+                g_error_free (error);
+        }
+
+       g_object_unref (app_info);
+       g_object_unref (ctx);
+}
+
 static void
 show_selected_layout (CcRegionPanel *self)
 {
@@ -1452,6 +1538,7 @@ setup_input_section (CcRegionPanel *self)
         priv->move_down_input = WID ("input_source_down");
         priv->show_config = WID ("input_source_config");
         priv->show_layout = WID ("input_source_layout");
+        priv->language_support_button = WID ("language-support-button");
 
         g_signal_connect_swapped (priv->options_button, "clicked",
                                   G_CALLBACK (show_input_options), self);
@@ -1467,6 +1554,8 @@ setup_input_section (CcRegionPanel *self)
                                   G_CALLBACK (show_selected_settings), self);
         g_signal_connect_swapped (priv->show_layout, "clicked",
                                   G_CALLBACK (show_selected_layout), self);
+        g_signal_connect_swapped (priv->language_support_button, "clicked",
+                                  G_CALLBACK (show_language_support), self);
 
         cc_list_box_setup_scrolling (GTK_LIST_BOX (priv->input_list), 5);
 
@@ -1485,6 +1574,16 @@ setup_input_section (CcRegionPanel *self)
         update_buttons (self);
 }
 
+static gchar *
+strip_quotes (const gchar *str)
+{
+        if ((g_str_has_prefix (str, "\"") && g_str_has_suffix (str, "\""))
+          || (g_str_has_prefix (str, "'") && g_str_has_suffix (str, "'")))
+                return g_strndup (str + 1, strlen (str) - 2);
+        else
+                return g_strdup (str);
+}
+
 static void
 on_localed_properties_changed (GDBusProxy     *proxy,
                                GVariant       *changed_properties,
@@ -1499,32 +1598,46 @@ on_localed_properties_changed (GDBusProxy     *proxy,
                 const gchar **strv;
                 gsize len;
                 gint i;
-                const gchar *lang, *messages, *time;
+                gchar *lang, *language, *messages, *time;
 
                 strv = g_variant_get_strv (v, &len);
 
-                lang = messages = time = NULL;
+                lang = language = messages = time = NULL;
                 for (i = 0; strv[i]; i++) {
                         if (g_str_has_prefix (strv[i], "LANG=")) {
-                                lang = strv[i] + strlen ("LANG=");
+                                lang = strip_quotes (strv[i] + strlen ("LANG="));
+                        } else if (g_str_has_prefix (strv[i], "LANGUAGE=")) {
+                                gchar *tmp = strip_quotes (strv[i] + strlen ("LANGUAGE="));
+                                gchar **tokens = g_strsplit (tmp, ":", 2);
+                                language = g_strdup (tokens[0]);
+                                g_free (tmp);
+                                g_strfreev (tokens);
                         } else if (g_str_has_prefix (strv[i], "LC_MESSAGES=")) {
-                                messages = strv[i] + strlen ("LC_MESSAGES=");
+                                messages = strip_quotes (strv[i] + strlen ("LC_MESSAGES="));
                         } else if (g_str_has_prefix (strv[i], "LC_TIME=")) {
-                                time = strv[i] + strlen ("LC_TIME=");
+                                time = strip_quotes (strv[i] + strlen ("LC_TIME="));
                         }
                 }
                 if (!lang) {
-                        lang = setlocale (LC_MESSAGES, NULL);
+                        lang = g_strdup ("en_US.UTF-8");
                 }
-                if (!messages) {
-                        messages = lang;
+
+                if (!language) {
+                        if (messages)
+                                language = g_strdup (messages);
+                        else
+                                language = g_strdup (lang);
                 }
                 g_free (priv->system_language);
-                priv->system_language = g_strdup (messages);
+                priv->system_language = g_strdup (language);
                 g_free (priv->system_region);
                 priv->system_region = g_strdup (time);
                 g_variant_unref (v);
                 g_free (strv);
+                g_free (lang);
+                g_free (language);
+                g_free (messages);
+                g_free (time);
 
                 update_language_label (self);
         }
@@ -1594,27 +1707,24 @@ set_localed_locale (CcRegionPanel *self)
 	CcRegionPanelPrivate *priv = self->priv;
         GVariantBuilder *b;
         gchar *s;
+        gchar *lang;
+        gint i;
+
+        cc_common_language_get_locale (priv->system_language, &lang);
 
         b = g_variant_builder_new (G_VARIANT_TYPE ("as"));
-        s = g_strconcat ("LANG=", priv->system_language, NULL);
+        s = g_strconcat ("LANG=", lang, NULL);
         g_variant_builder_add (b, "s", s);
         g_free (s);
 
-        if (priv->system_region != NULL &&
-            g_strcmp0 (priv->system_language, priv->system_region) != 0) {
-                s = g_strconcat ("LC_TIME=", priv->system_region, NULL);
-                g_variant_builder_add (b, "s", s);
-                g_free (s);
-                s = g_strconcat ("LC_NUMERIC=", priv->system_region, NULL);
-                g_variant_builder_add (b, "s", s);
-                g_free (s);
-                s = g_strconcat ("LC_MONETARY=", priv->system_region, NULL);
-                g_variant_builder_add (b, "s", s);
-                g_free (s);
-                s = g_strconcat ("LC_MEASUREMENT=", priv->system_region, NULL);
-                g_variant_builder_add (b, "s", s);
-                g_free (s);
-                s = g_strconcat ("LC_PAPER=", priv->system_region, NULL);
+        s = g_strconcat ("LANGUAGE=", priv->system_language, NULL);
+        g_variant_builder_add (b, "s", s);
+        g_free (s);
+        const gchar *format_categories[] = { "LC_NUMERIC", "LC_TIME",
+           "LC_MONETARY", "LC_PAPER", "LC_IDENTIFICATION", "LC_NAME",
+           "LC_ADDRESS", "LC_TELEPHONE", "LC_MEASUREMENT", NULL };
+        for (i = 0; format_categories[i] != NULL; i++) {
+                s = g_strconcat (format_categories[i], "=", priv->system_region, NULL);
                 g_variant_builder_add (b, "s", s);
                 g_free (s);
         }

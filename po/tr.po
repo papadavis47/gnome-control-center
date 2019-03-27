@@ -3896,7 +3896,13 @@ msgid "Fully charged"
 msgstr "Tamamen dolu"
 
 #. TRANSLATORS: primary battery
-#: panels/power/cc-power-panel.c:321 panels/power/cc-power-panel.c:349
+#: panels/power/cc-power-panel.c:327 panels/power/cc-power-panel.c:357
+#| msgid "Charging"
+msgid "Not charging"
+msgstr "Şarj olmuyor"
+
+#. TRANSLATORS: primary battery
+#: panels/power/cc-power-panel.c:331 panels/power/cc-power-panel.c:361
 msgid "Empty"
 msgstr "Boş"
 

@@ -23,6 +23,7 @@
 #include "pp-printer.h"
 
 #include <string.h>
+#include <gio/gdesktopappinfo.h>
 #include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
 #include <polkit/polkit.h>
@@ -1104,6 +1105,32 @@ printer_add_cb (GtkToolButton *toolbutton,
 }
 
 static void
+show_system_config_printer (void)
+{
+  GAppInfo *app_info;
+  GdkAppLaunchContext *ctx;
+  GError *error = NULL;
+
+  app_info = G_APP_INFO (g_desktop_app_info_new ("system-config-printer.desktop"));
+
+  if (app_info) {
+    ctx = gdk_display_get_app_launch_context (gdk_display_get_default ());
+    g_app_info_launch (app_info, NULL, G_APP_LAUNCH_CONTEXT (ctx), &error);
+  } else {
+    g_warning ("Failed to launch system-config-printer: couldn't create GDesktopAppInfo");
+    return;
+  }
+
+  if (error) {
+    g_warning ("Failed to launch system-config-printer: %s", error->message);
+    g_error_free (error);
+  }
+
+  g_object_unref (app_info);
+  g_object_unref (ctx);
+}
+
+static void
 update_sensitivity (gpointer user_data)
 {
   CcPrintersPanelPrivate  *priv;
@@ -1419,6 +1446,14 @@ cc_printers_panel_init (CcPrintersPanel *self)
   widget = (GtkWidget*)
     gtk_builder_get_object (priv->builder, "printer-add-button2");
   g_signal_connect (widget, "clicked", G_CALLBACK (printer_add_cb), self);
+
+  widget = (GtkWidget*) gtk_builder_get_object (priv->builder, "system-config-printer-button1");
+  g_signal_connect_swapped (widget, "clicked",
+                            G_CALLBACK (show_system_config_printer), NULL);
+
+  widget = (GtkWidget*) gtk_builder_get_object (priv->builder, "system-config-printer-button2");
+  g_signal_connect_swapped (widget, "clicked",
+                            G_CALLBACK (show_system_config_printer), NULL);
 
   widget = (GtkWidget*)
     gtk_builder_get_object (priv->builder, "content");

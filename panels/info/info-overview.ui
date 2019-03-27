@@ -12,13 +12,14 @@
       <object class="GtkBox">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
-        <property name="spacing">18</property>
+        <property name="spacing">6</property>
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkImage" id="system_image">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="resource">/org/gnome/control-center/info/GnomeLogoVerticalMedium.svg</property>
+            <property name="pixel_size">128</property>
+            <property name="icon_name">ubuntu-logo-icon</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -27,13 +28,16 @@
           </packing>
         </child>
         <child>
-          <object class="GtkLabel" id="version_label">
+          <object class="GtkLabel" id="os_name_label">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label">Version 3.0</property>
             <property name="selectable">True</property>
+            <property name="margin-bottom">24</property>
             <attributes>
               <attribute name="scale" value="1.25"/>
+              <attribute name="weight" value="bold"/>
+              <attribute name="font-desc" value="Ubuntu 16"/>
             </attributes>
           </object>
           <packing>
@@ -66,6 +70,67 @@
                 <property name="left-attach">1</property>
               </packing>
             </child>
+            <!-- Computer details -->
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">1</property>
+                <property name="label" translatable="yes">Computer</property>
+                <property name="mnemonic_widget">computer_label</property>
+                <style>
+                 <class name="dim-label"/>
+                </style>
+              </object>
+              <packing>
+                <property name="top-attach">1</property>
+                <property name="left-attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="computer_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <property name="label">Unknown</property>
+                <property name="selectable">True</property>
+              </object>
+              <packing>
+                <property name="top-attach">1</property>
+                <property name="left-attach">2</property>
+              </packing>
+            </child>
+            <!-- Model details -->
+            <child>
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">1</property>
+                <property name="label" translatable="yes">Model</property>
+                <property name="mnemonic_widget">model_label</property>
+                <style>
+                 <class name="dim-label"/>
+                </style>
+              </object>
+              <packing>
+                <property name="top-attach">2</property>
+                <property name="left-attach">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="model_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <property name="label">Unknown</property>
+                <property name="selectable">True</property>
+              </object>
+              <packing>
+                <property name="top-attach">2</property>
+                <property name="left-attach">2</property>
+              </packing>
+            </child>
+            <!-- Memory Details -->
             <child>
               <object class="GtkLabel" id="label5">
                 <property name="visible">True</property>
@@ -78,7 +143,7 @@
                 </style>
               </object>
               <packing>
-                <property name="top-attach">1</property>
+                <property name="top-attach">3</property>
                 <property name="left-attach">1</property>
               </packing>
             </child>
@@ -94,7 +159,7 @@
                 </style>
               </object>
               <packing>
-                <property name="top-attach">2</property>
+                <property name="top-attach">4</property>
                 <property name="left-attach">1</property>
               </packing>
             </child>
@@ -109,7 +174,7 @@
                 </style>
               </object>
               <packing>
-                <property name="top-attach">3</property>
+                <property name="top-attach">5</property>
                 <property name="left-attach">1</property>
               </packing>
             </child>
@@ -118,14 +183,14 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="xalign">1</property>
-                <property name="label" translatable="yes" comments="To translators: this field contains the distro name and version">OS name</property>
-                <property name="mnemonic_widget">os_name_label</property>
+                <property name="label">GNOME</property>
+                <property name="mnemonic_widget">version_label</property>
                 <style>
                  <class name="dim-label"/>
                 </style>
               </object>
               <packing>
-                <property name="top-attach">4</property>
+                <property name="top-attach">6</property>
                 <property name="left-attach">1</property>
               </packing>
             </child>
@@ -141,7 +206,7 @@
                 </style>
               </object>
               <packing>
-                <property name="top-attach">5</property>
+                <property name="top-attach">7</property>
                 <property name="left-attach">1</property>
               </packing>
             </child>
@@ -157,7 +222,7 @@
                 </style>
               </object>
               <packing>
-                <property name="top-attach">6</property>
+                <property name="top-attach">8</property>
                 <property name="left-attach">1</property>
               </packing>
             </child>
@@ -173,7 +238,7 @@
                 </style>
               </object>
               <packing>
-                <property name="top-attach">7</property>
+                <property name="top-attach">9</property>
                 <property name="left-attach">1</property>
               </packing>
             </child>
@@ -197,7 +262,7 @@
                 <property name="selectable">True</property>
               </object>
               <packing>
-                <property name="top-attach">1</property>
+                <property name="top-attach">3</property>
                 <property name="left-attach">2</property>
               </packing>
             </child>
@@ -210,7 +275,7 @@
                 <property name="selectable">True</property>
               </object>
               <packing>
-                <property name="top-attach">2</property>
+                <property name="top-attach">4</property>
                 <property name="left-attach">2</property>
               </packing>
             </child>
@@ -223,38 +288,12 @@
                 <property name="selectable">True</property>
               </object>
               <packing>
-                <property name="top-attach">3</property>
-                <property name="left-attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="os_name_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="xalign">0</property>
-                <property name="label">Unknown</property>
-                <property name="selectable">True</property>
-              </object>
-              <packing>
-                <property name="top-attach">4</property>
-                <property name="left-attach">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkLabel" id="os_type_label">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="xalign">0</property>
-                <property name="label">Unknown</property>
-                <property name="selectable">True</property>
-              </object>
-              <packing>
                 <property name="top-attach">5</property>
                 <property name="left-attach">2</property>
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="virt_type_label">
+              <object class="GtkLabel" id="version_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="xalign">0</property>
@@ -267,6 +306,32 @@
               </packing>
             </child>
             <child>
+              <object class="GtkLabel" id="os_type_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <property name="label">Unknown</property>
+                <property name="selectable">True</property>
+              </object>
+              <packing>
+                <property name="top-attach">7</property>
+                <property name="left-attach">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="virt_type_label">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0</property>
+                <property name="label">Unknown</property>
+                <property name="selectable">True</property>
+              </object>
+              <packing>
+                <property name="top-attach">8</property>
+                <property name="left-attach">2</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkLabel" id="disk_label">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
@@ -275,7 +340,7 @@
                 <property name="selectable">True</property>
               </object>
               <packing>
-                <property name="top-attach">7</property>
+                <property name="top-attach">9</property>
                 <property name="left-attach">2</property>
               </packing>
             </child>
@@ -300,6 +365,98 @@
             <property name="position">2</property>
           </packing>
         </child>
+        <!-- Pop!_OS-specific UI widgets -->
+        <!-- Firmware Option -->
+        <child>
+          <object class="GtkLabel" id="firmware_upgrade">
+            <property name="halign">start</property>
+            <property name="use-markup">True</property>
+            <property name="visible">True</property>
+            <property name="margin-top">12</property>
+            <property name="label" translatable="yes">&lt;b&gt;Computer Firmware&lt;/b&gt;</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFrame" id="firmware_upgrade_frame">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label_xalign">0</property>
+            <property name="shadow_type">in</property>
+            <property name="margin_top">6</property>
+            <child>
+              <object class="GtkListBox" id="firmware_upgrade_listbox">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="selection_mode">none</property>
+                <!-- Firmware upgrade option -->
+                <child>
+                  <object class="GtkListBoxRow" id="firmware_upgrade_row">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <child>
+                      <object class="GtkBox" id="firmware_upgrade_box">
+                        <property name="visible">True</property>
+                        <property name="can_focus">False</property>
+                        <property name="spacing">50</property>
+                        <property name="margin_start">20</property>
+                        <property name="margin_end">20</property>
+                        <property name="margin_top">9</property>
+                        <property name="margin_bottom">9</property>
+                        <child>
+                          <object class="GtkLabel" id="firmware_upgrade_label">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="xalign">0</property>
+                            <property name="use_underline">True</property>
+                            <property name="mnemonic_widget">firmware_button</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkButton" id="firmware_button">
+                            <property name="visible">True</property>
+                            <property name="can_focus">False</property>
+                            <property name="valign">center</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="use-markup">True</property>
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">&lt;b&gt;Upgrade&lt;/b&gt;</property>
+                              </object>
+                            </child>
+                            <style>
+                              <class name="suggested-action"/>
+                            </style>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">6</property>
+          </packing>
+        </child>
+        <!-- End of Pop!_OS changes -->
         <child>
           <object class="GtkButtonBox" id="hbuttonbox1">
             <property name="visible">True</property>

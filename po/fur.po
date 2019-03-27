@@ -3901,7 +3901,12 @@ msgid "Fully charged"
 msgstr "Cjarie"
 
 #. TRANSLATORS: primary battery
-#: panels/power/cc-power-panel.c:321 panels/power/cc-power-panel.c:349
+#: panels/power/cc-power-panel.c:327 panels/power/cc-power-panel.c:357
+msgid "Not charging"
+msgstr "Nol sta cjariant"
+
+#. TRANSLATORS: primary battery
+#: panels/power/cc-power-panel.c:331 panels/power/cc-power-panel.c:361
 msgid "Empty"
 msgstr "Scjarie"
 
