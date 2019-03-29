@@ -54,6 +54,7 @@ sources = files(gsd_sources) + files(
   'cc-info-removable-media-panel.c',
   'dmi-info.c',
   'info-cleanup.c',
+  'pop-upgrade.c',
   's76-firmware.c',
   's76-firmware-daemon.c',
   's76-firmware-dialog.c',

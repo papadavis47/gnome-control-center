@@ -366,6 +366,30 @@
           </packing>
         </child>
         <!-- Pop!_OS-specific UI widgets -->
+        <!-- OS Upgrade Option -->
+        <child>
+          <object class="GtkLabel" id="os_upgrade">
+            <property name="halign">start</property>
+            <property name="use-markup">True</property>
+            <property name="visible">True</property>
+            <property name="margin-top">12</property>
+            <property name="label" translatable="yes">&lt;b&gt;OS Upgrade &#038;amp; Refresh&lt;/b&gt;</property>
+          </object>
+          <packing>
+            <property name="expand">True</property>
+            <property name="fill">True</property>
+            <property name="position">5</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFrame" id="os_upgrade_frame">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label_xalign">0</property>
+            <property name="shadow_type">in</property>
+            <property name="margin_top">6</property>
+          </object>
+        </child>
         <!-- Firmware Option -->
         <child>
           <object class="GtkLabel" id="firmware_upgrade">
@@ -492,3 +516,4 @@
     </child>
   </template>
 </interface>
+
